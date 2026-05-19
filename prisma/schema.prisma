@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ModerationLog {
+  id        String   @id @default(cuid())
+  text      String
+  flagged   Boolean
+  categories Json
+  scores    Json
+  action    String
+  createdAt DateTime @default(now())
+}
