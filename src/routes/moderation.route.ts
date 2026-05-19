@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { analyzeContext } from '../services/context.service';
 import { moderateText } from '../services/moderation.service';
 import prisma from '../prisma';
-
 const router = Router();
 
 /**
@@ -29,34 +29,46 @@ const router = Router();
  */
 
 router.post('/moderate', async (req: Request, res: Response, next: NextFunction) => {
-    const { text } = req.body;
+  const { mode, text, messages } = req.body;
 
-    if (!text) {
-        res.status(400).json({ error: 'text alanı zorunludur.' });
+  try {
+    if (mode === 'context') {
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        res.status(400).json({ error: 'messages alanı zorunludur ve dizi olmalıdır.' });
         return;
+      }
+
+      const result = await analyzeContext(messages);
+      res.json(result);
+      return;
+    }
+
+    // single mod (varsayılan)
+    if (!text) {
+      res.status(400).json({ error: 'text alanı zorunludur.' });
+      return;
     }
 
     if (typeof text !== 'string') {
-        res.status(400).json({ error: 'text string olmalıdır.' });
-        return;
+      res.status(400).json({ error: 'text string olmalıdır.' });
+      return;
     }
 
     if (text.length > 5000) {
-        res.status(400).json({ error: 'text 5000 karakterden uzun olamaz.' });
-        return;
+      res.status(400).json({ error: 'text 5000 karakterden uzun olamaz.' });
+      return;
     }
 
     if (text.trim().length === 0) {
-        res.status(400).json({ error: 'text boş olamaz.' });
-        return;
+      res.status(400).json({ error: 'text boş olamaz.' });
+      return;
     }
 
-    try {
-        const result = await moderateText(text);
-        res.json(result);
-    } catch (err) {
-        next(err);
-    }
+    const result = await moderateText(text);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
