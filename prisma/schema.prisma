@@ -8,11 +8,21 @@ datasource db {
 }
 
 model ModerationLog {
-  id        String   @id @default(cuid())
-  text      String
-  flagged   Boolean
+  id         String   @id @default(cuid())
+  text       String
+  flagged    Boolean
   categories Json
-  scores    Json
+  scores     Json
+  action     String
+  createdAt  DateTime @default(now())
+}
+model ContextLog {
+  id        String   @id @default(cuid())
+  messages  Json
+  flagged   Boolean
+  reason    String
   action    String
+  severity  String
+  provider  String
   createdAt DateTime @default(now())
 }
