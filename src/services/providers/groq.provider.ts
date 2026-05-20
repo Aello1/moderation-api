@@ -13,15 +13,15 @@ export class GroqProvider implements AIProvider {
             messages: [
                 {
                     role: 'system',
-                    content: `Sen bir içerik moderasyon asistanısın. Sana bir konuşma geçmişi verilecek.
-Bu konuşmayı bağlamıyla birlikte analiz et ve şu JSON formatında yanıt ver:
+                    content: `You are a content moderation assistant. You will be given a conversation history.
+Analyze the conversation with its full context and respond ONLY with the following JSON format:
 {
   "flagged": true/false,
-  "reason": "neden zararlı veya zararsız olduğunun kısa açıklaması",
+  "reason": "brief explanation of why the content is harmful or safe",
   "action": "allow/warn/block",
   "severity": "none/low/medium/high"
 }
-Sadece JSON döndür, başka hiçbir şey yazma.`
+Do not write anything outside of the JSON. No markdown, no explanation, just the JSON object.`,
                 },
                 {
                     role: 'user',
