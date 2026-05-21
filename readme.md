@@ -112,6 +112,9 @@ GET /api/stats
 - Groq — Llama 3.3 70B
 - Swagger UI
 
+
+> **Note:** Gemini provider may not be available in all regions due to Google API restrictions.
+
 ## License
 
 MIT with Commons Clause — free for non-commercial use. Contact for commercial licensing.
