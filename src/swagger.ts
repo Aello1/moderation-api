@@ -6,7 +6,7 @@ const options = {
         info: {
             title: 'Moderation API',
             version: '1.0.0',
-            description: 'AI destekli içerik moderasyon API\'si'
+            description: 'AI-powered content moderation API'
         }
     },
     apis: ['./src/routes/*.ts']

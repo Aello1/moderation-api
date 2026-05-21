@@ -8,24 +8,43 @@ const router = Router();
  * @openapi
  * /api/moderate:
  *   post:
- *     summary: Metni analiz et
+ *     summary: Analyze text or conversation
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - text
- *             properties:
- *               text:
- *                 type: string
- *                 example: "I hate you"
+ *             oneOf:
+ *               - type: object
+ *                 properties:
+ *                   mode:
+ *                     type: string
+ *                     enum: [single]
+ *                   text:
+ *                     type: string
+ *                     example: "I hate you"
+ *               - type: object
+ *                 properties:
+ *                   mode:
+ *                     type: string
+ *                     enum: [context]
+ *                   messages:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         username:
+ *                           type: string
+ *                         role:
+ *                           type: string
+ *                           enum: [user, assistant]
+ *                         content:
+ *                           type: string
  *     responses:
  *       200:
- *         description: Analiz sonucu
+ *         description: Analysis result
  *       400:
- *         description: Geçersiz istek
+ *         description: Invalid request
  */
 
 router.post('/moderate', async (req: Request, res: Response, next: NextFunction) => {

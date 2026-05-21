@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(rateLimiter);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Moderation API çalışıyor.' });
+  res.json({ status: 'ok', message: 'Moderation API is running.' });
 });
 
 app.use('/api', moderationRouter);
@@ -22,5 +22,5 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Server ${PORT} portunda çalışıyor.`);
+  console.log(`Server is running on port ${PORT}.`);
 });
