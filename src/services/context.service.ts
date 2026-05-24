@@ -3,10 +3,8 @@ import { AIProvider, Message, ModerationResult } from './providers/base.provider
 import { GroqProvider } from './providers/groq.provider';
 import { GeminiProvider } from './providers/gemini.provider';
 
-function getProvider(): AIProvider {
-  const provider = process.env.AI_PROVIDER ?? 'groq';
-
-  switch (provider) {
+function getProvider(providerName: string): AIProvider {
+  switch (providerName) {
     case 'groq':
       return new GroqProvider();
     case 'gemini':
@@ -17,8 +15,26 @@ function getProvider(): AIProvider {
 }
 
 export async function analyzeContext(messages: Message[]): Promise<ModerationResult> {
-  const provider = getProvider();
-  const result = await provider.analyzeContext(messages);
+  const primaryName = process.env.AI_PROVIDER ?? 'groq';
+  const fallbackName = process.env.AI_FALLBACK;
+
+  const primary = getProvider(primaryName);
+  let usedProvider = primaryName;
+
+  let result: ModerationResult;
+
+  try {
+    result = await primary.analyzeContext(messages);
+  } catch (primaryError) {
+    if (!fallbackName) {
+      throw primaryError;
+    }
+
+    console.warn(`Primary provider (${primaryName}) failed, switching to fallback (${fallbackName})`);
+    const fallback = getProvider(fallbackName);
+    usedProvider = fallbackName;
+    result = await fallback.analyzeContext(messages);
+  }
 
   await prisma.contextLog.create({
     data: {
@@ -27,7 +43,7 @@ export async function analyzeContext(messages: Message[]): Promise<ModerationRes
       reason: result.reason,
       action: result.action,
       severity: result.severity,
-      provider: process.env.AI_PROVIDER ?? 'groq',
+      provider: usedProvider,
     },
   });
 
