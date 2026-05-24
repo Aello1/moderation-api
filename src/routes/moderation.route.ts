@@ -94,19 +94,19 @@ router.post('/moderate', async (req: Request, res: Response, next: NextFunction)
  * @openapi
  * /api/logs:
  *   get:
- *     summary: Moderasyon geçmişini listele
+ *     summary: List moderation history
  *     parameters:
  *       - in: query
  *         name: flagged
  *         schema:
  *           type: boolean
- *         description: Sadece flagged olanları getir
+ *         description: Return only flagged entries
  *       - in: query
  *         name: action
  *         schema:
  *           type: string
  *           enum: [allow, warn, block]
- *         description: Action tipine göre filtrele
+ *         description: Filter by action type
  *       - in: query
  *         name: page
  *         schema:
@@ -119,7 +119,7 @@ router.post('/moderate', async (req: Request, res: Response, next: NextFunction)
  *           default: 10
  *     responses:
  *       200:
- *         description: Log listesi
+ *         description: Log list
  */
 
 router.get('/logs', async (req: Request, res: Response, next: NextFunction) => {
@@ -168,34 +168,55 @@ router.get('/logs', async (req: Request, res: Response, next: NextFunction) => {
  * @openapi
  * /api/stats:
  *   get:
- *     summary: Moderasyon istatistikleri
+ *     summary: Moderation statistics
  *     responses:
  *       200:
- *         description: İstatistik özeti
+ *         description: Statistics summary
  */
 
 router.get('/stats', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const [total, flaggedCount, actionGroups] = await Promise.all([
+        const [
+            singleTotal,
+            singleFlagged,
+            singleActionGroups,
+            contextTotal,
+            contextFlagged,
+            contextActionGroups,
+        ] = await Promise.all([
             prisma.moderationLog.count(),
             prisma.moderationLog.count({ where: { flagged: true } }),
-            prisma.moderationLog.groupBy({
-                by: ['action'],
-                _count: { action: true }
-            })
+            prisma.moderationLog.groupBy({ by: ['action'], _count: { action: true } }),
+            prisma.contextLog.count(),
+            prisma.contextLog.count({ where: { flagged: true } }),
+            prisma.contextLog.groupBy({ by: ['action'], _count: { action: true } }),
         ]);
 
-        const actions: Record<string, number> = {};
-        for (const group of actionGroups) {
-            actions[group.action] = group._count.action;
-        }
+        const toActionMap = (groups: { action: string, _count: { action: number } }[]) => {
+            const map: Record<string, number> = {};
+            for (const g of groups) map[g.action] = g._count.action;
+            return map;
+        };
+
+        const total = singleTotal + contextTotal;
+        const flagged = singleFlagged + contextFlagged;
 
         res.json({
             total,
-            flagged: flaggedCount,
-            flaggedRate: total > 0 ? ((flaggedCount / total) * 100).toFixed(1) + '%' : '0%',
-            actions
+            flagged,
+            flaggedRate: total > 0 ? ((flagged / total) * 100).toFixed(1) + '%' : '0%',
+            single: {
+                total: singleTotal,
+                flagged: singleFlagged,
+                actions: toActionMap(singleActionGroups)
+            },
+            context: {
+                total: contextTotal,
+                flagged: contextFlagged,
+                actions: toActionMap(contextActionGroups)
+            }
         })
+
     } catch (err) {
         next(err)
     }
